@@ -173,11 +173,11 @@
                 function (data, status) {
                     if (status == "success" && data.code == "200") {
                         var weather = "<i class='qi-" + data.now.icon + "'></i>"
-                            + " 当前天气" + data.now.text
-                            + " 温度" + data.now.temp + "℃"
-                            + " 体感温度" + data.now.feelsLike + "℃"
-                            + " 风向" + data.now.windDir
-                            + " 风力" + data.now.windScale + "级 <br/>"
+                            + " 当前 " + data.now.text
+                            + " " + data.now.temp + "℃"
+                            + " 体感" + data.now.feelsLike + "℃"
+                            + " " + data.now.windDir
+                            + " " + data.now.windScale + "级 <br/>"
                             + " 湿度" + data.now.humidity + "%"
                             + " 降水" + data.now.precip + "mm/h"
                             + " 能见度" + data.now.vis + "km"
@@ -253,7 +253,7 @@
             };
 
             var poetryContent = trimTitle(poetrys[index].title)
-                + "<br />" + poetrys[index].dynasty
+                + " " + poetrys[index].dynasty
                 + " " + poetrys[index].author
                 + "<br/>" + formatedPoetry;
 
@@ -355,22 +355,25 @@
         }
 
         #dateBlock {
-            font-size: 52px;
+            font-size: 36px;
         }
 
         #chineseDateBlock {
-            font-size: 52px;
+            font-size: 36px;
         }
 
         #timeBlock {
-            margin: 5px;
-            font-size: 260px;
+            padding: 0px;
+            margin: 0px;
+            border: 0px;
+            font-size: 250px;
             font-family: "chesstype";
+        
         }
         #poetryBlock {
             text-align: center;
             margin: 0 auto;
-            font-size: 52px;
+            font-size: 36px;
             font-family: "fzxiaktjf";
         }
 
@@ -378,11 +381,11 @@
      
 
         #weatherNowBlock {
-            font-size: 36px;
+            font-size: 32px;
         }
 
         .weatherCell {
-            font-size: 36px;
+            font-size: 32px;
         }
 
         .weeklyCell {
@@ -423,7 +426,7 @@
         </div>
         <hr />
         <div id='weatherNowBlock'></div>
-        <div id='weatherInfoBlock'></div>
+        <!-- <div id='weatherInfoBlock'></div> -->
     </div>
 </body>
 
