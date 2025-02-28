@@ -183,7 +183,7 @@
                             + " 能见度" + data.now.vis + "km"
                             ;
                         $("#weatherNowBlock").html(weather);
-                        $("#weatherInfoBlock").text("观测时间: " + data.now.obsTime);
+                        $("#weatherInfoBlock").text("更新时间: " + data.now.obsTime);
                     }
                     else {
                         $("#weatherInfoBlock").text("数据: " + JSON.stringify(data) + "\n状态: " + status);
@@ -253,9 +253,9 @@
             };
 
             var poetryContent = trimTitle(poetrys[index].title)
-                + " " + poetrys[index].dynasty
+                + `<br/><p style="font-size: 22px; margin: 0px">`+ poetrys[index].dynasty
                 + " " + poetrys[index].author
-                + "<br/>" + formatedPoetry;
+                + `</p><p style="font-size: 32px; margin: 0px">`+ formatedPoetry+ `</p>`;
 
             $("#poetryBlock").html(poetryContent);
         }
@@ -373,8 +373,8 @@
         #poetryBlock {
             text-align: center;
             margin: 0 auto;
-            font-size: 36px;
-            font-family: "fzxiaktjf";
+            font-size: 32px;
+            font-family:"fzxiaktjf";
         }
 
 
@@ -426,7 +426,7 @@
         </div>
         <hr />
         <div id='weatherNowBlock'></div>
-        <!-- <div id='weatherInfoBlock'></div> -->
+        <div id='weatherInfoBlock'></div>
     </div>
 </body>
 
