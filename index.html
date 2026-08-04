@@ -207,40 +207,36 @@
                         detailText = "充值 ¥" + toppedUp.toFixed(2);
                     }
 
-                    // 大号余额卡片（NAS 渲染 PNG 灰度图，Kindle 上清晰可读）
+                    // 左右布局余额卡片：左侧 DeepSeek 鲸鱼 logo 图片，右侧余额信息
                     $("#deepseekBalanceBlock").html(
                         "<div class='ds-card'>"
-                        + "<div class='ds-card-head'>"
-                        + "<span class='ds-badge'>DS</span>"
-                        + "<span class='ds-title'>DeepSeek</span>"
-                        + "<span class='ds-label'>账户余额</span>"
+                        + "<div class='ds-whale'><span class='ds-whale-emoji'>🐳</span></div>"
+                        + "<div class='ds-info'>"
+                        + "<div class='ds-brand'><span class='ds-title'>DeepSeek</span><span class='ds-label'>账户余额</span></div>"
+                        + "<div class='ds-amount-line'><span class='ds-currency'>¥</span><span class='ds-amount'>" + totalText + "</span></div>"
+                        + (detailText ? "<div class='ds-detail'>" + detailText + "</div>" : "")
                         + "</div>"
-                        + "<div class='ds-card-body'>"
-                        + "<span class='ds-currency'>¥</span>"
-                        + "<span class='ds-amount'>" + totalText + "</span>"
-                        + "</div>"
-                        + (detailText ? "<div class='ds-card-foot'>" + detailText + "</div>" : "")
                         + "</div>"
                     );
                 } else {
                     $("#deepseekBalanceBlock").html(
                         "<div class='ds-card'>"
-                        + "<div class='ds-card-head'>"
-                        + "<span class='ds-badge'>DS</span>"
-                        + "<span class='ds-title'>DeepSeek</span>"
+                        + "<div class='ds-whale'><span class='ds-whale-emoji'>🐳</span></div>"
+                        + "<div class='ds-info'>"
+                        + "<div class='ds-brand'><span class='ds-title'>DeepSeek</span></div>"
+                        + "<div class='ds-amount-line ds-error-text'>余额不可用</div>"
                         + "</div>"
-                        + "<div class='ds-card-body ds-error-body'>余额不可用</div>"
                         + "</div>"
                     );
                 }
             }).fail(function () {
                 $("#deepseekBalanceBlock").html(
                     "<div class='ds-card'>"
-                    + "<div class='ds-card-head'>"
-                    + "<span class='ds-badge'>DS</span>"
-                    + "<span class='ds-title'>DeepSeek</span>"
+                    + "<div class='ds-whale'><span class='ds-whale-emoji'>🐳</span></div>"
+                    + "<div class='ds-info'>"
+                    + "<div class='ds-brand'><span class='ds-title'>DeepSeek</span></div>"
+                    + "<div class='ds-amount-line ds-error-text'>余额待更新</div>"
                     + "</div>"
-                    + "<div class='ds-card-body ds-error-body'>余额待更新</div>"
                     + "</div>"
                 );
             });
@@ -519,57 +515,68 @@
             max-width: 92%;
         }
 
-        /* DeepSeek 余额大卡片（NAS 渲染 PNG 灰度图，Kindle 上清晰可读） */
+        /* DeepSeek 余额卡片（左右布局：左大图 + 右信息，NAS 渲染 PNG 灰度图） */
         #deepseekBalanceBlock {
             margin: 8px auto;
-            width: 88%;
-            max-width: 420px;
+            width: 96%;
+            max-width: 520px;
         }
 
         .ds-card {
+            display: flex;
+            align-items: center;
             border: 1px solid #888888;
-            border-radius: 10px;
+            border-radius: 12px;
             background: #ffffff;
             overflow: hidden;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
         }
 
-        /* 卡片头部：黑色品牌条 */
-        .ds-card-head {
-            background: #000000;
-            color: #ffffff;
-            padding: 6px 14px;
-            text-align: left;
+        /* 左侧：大号鲸鱼 emoji（居中显示） */
+        .ds-whale {
+            flex: 0 0 42%;
             display: flex;
             align-items: center;
+            justify-content: center;
+            padding: 16px 0;
         }
 
-        .ds-badge {
-            background: #ffffff;
-            color: #000000;
-            font-size: 24px;
-            font-weight: bold;
-            padding: 2px 8px;
-            margin-right: 10px;
-            border-radius: 4px;
+        .ds-whale-emoji {
+            font-size: 150px;
+            line-height: 1;
+            display: block;
+        }
+
+        /* 右侧：余额信息 */
+        .ds-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 14px 16px;
+            text-align: left;
+        }
+
+        .ds-brand {
+            display: flex;
+            align-items: baseline;
         }
 
         .ds-title {
             font-size: 30px;
             font-weight: bold;
+            color: #000000;
         }
 
         .ds-label {
-            margin-left: auto;
-            font-size: 22px;
-            color: #cccccc;
+            margin-left: 10px;
+            font-size: 20px;
+            color: #888888;
         }
 
-        /* 卡片主体：大号金额 */
-        .ds-card-body {
-            padding: 10px 10px;
-            text-align: center;
-            background: #ffffff;
+        .ds-amount-line {
+            margin: 6px 0 2px;
+            white-space: nowrap;
         }
 
         .ds-currency {
@@ -580,26 +587,21 @@
         }
 
         .ds-amount {
-            font-size: 64px;
+            font-size: 62px;
             font-weight: bold;
             color: #000000;
             letter-spacing: 2px;
             margin-left: 6px;
         }
 
-        /* 卡片底部：明细 */
-        .ds-card-foot {
-            padding: 4px 10px 6px;
+        .ds-detail {
             font-size: 20px;
             color: #777777;
-            border-top: 1px solid #eeeeee;
-            text-align: center;
         }
 
-        .ds-error-body {
-            font-size: 30px;
+        .ds-error-text {
+            font-size: 28px;
             color: #777777;
-            padding: 16px 10px;
         }
 
 
