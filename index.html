@@ -24,6 +24,8 @@
         var Weather_Realtime_Url = "https://devapi.qweather.com/v7/weather/now?";
         var Weather_Forecast_Hour_Url = "https://devapi.qweather.com/v7/weather/24h?"
         var Weather_Forecast_Day_Url = "https://devapi.qweather.com/v7/weather/3d?"
+        var Weather_Air_Url = "https://devapi.qweather.com/v7/air/now?"
+        var Weather_Indices_Url = "https://devapi.qweather.com/v7/indices/1d?"
 
         // hitokoto API 
         var Hitokoto_Url = "https://v1.hitokoto.cn/?";
@@ -55,6 +57,7 @@
             }
 
             UpdateContentPerMinute();
+            setDeepSeekBalanceArea();
             positionFooter();
             $(window).scroll(positionFooter).resize(positionFooter);
         });
@@ -69,9 +72,7 @@
                 now.setHours(now.getHours() + Timezone_Offset);
             }
 
-            // Time area
-            var timeString = padding0(now.getHours(), 2) + ':' + padding0(now.getMinutes(), 2);
-            $("#timeBlock").text(timeString);
+            // Time area: 实时时间留空不渲染，但保留位置
 
             // update Date area and poetry every day
             if (lastDateUpdateTime == null || now.getDay() != lastDateUpdateTime.getDay()) {
@@ -109,11 +110,11 @@
             }
             $("#dateBlock").text(dateString);
 
-            // Chinese Lunar Calendar
-            var cc = new CalendarConverter;
-            var lunarDate = cc.solar2lunar(new Date(now));
-            var chineseDateString = lunarDate.cYear + "年" + (lunarDate.isLeap ? "闰" : "") + lunarDate.lunarMonth + "月" + lunarDate.lunarDay;
-            $("#chineseDateBlock").text(chineseDateString);
+            // Chinese Lunar Calendar（已注释：如需恢复农历日期显示，取消注释即可）
+            // var cc = new CalendarConverter;
+            // var lunarDate = cc.solar2lunar(new Date(now));
+            // var chineseDateString = lunarDate.cYear + "年" + (lunarDate.isLeap ? "闰" : "") + lunarDate.lunarMonth + "月" + lunarDate.lunarDay;
+            // $("#chineseDateBlock").text(chineseDateString);
         }
 
         function setCalendarArea() {
@@ -182,6 +183,69 @@
             });
         }
 
+        // DeepSeek 余额显示（余额数据由 GitHub Actions 定时更新到 deepseek_balance.json）
+        function setDeepSeekBalanceArea() {
+            log("setDeepSeekBalanceArea");
+            $.getJSON("deepseek_balance.json", function (data) {
+                if (data.is_available && data.balance_infos.length > 0) {
+                    var balanceInfo = data.balance_infos[0];
+                    var totalBalance = parseFloat(balanceInfo.total_balance);
+                    var toppedUp = parseFloat(balanceInfo.topped_up_balance);
+                    var granted = parseFloat(balanceInfo.granted_balance);
+                    if (isNaN(totalBalance)) totalBalance = 0;
+                    if (isNaN(toppedUp)) toppedUp = 0;
+                    if (isNaN(granted)) granted = 0;
+                    var totalText = totalBalance.toFixed(2);
+
+                    // 赠送余额大于0时展示明细，否则隐藏
+                    var detailText = "";
+                    if (granted > 0 && toppedUp > 0) {
+                        detailText = "赠送 ¥" + granted.toFixed(2) + " · 充值 ¥" + toppedUp.toFixed(2);
+                    } else if (granted > 0) {
+                        detailText = "赠送 ¥" + granted.toFixed(2);
+                    } else if (toppedUp > 0) {
+                        detailText = "充值 ¥" + toppedUp.toFixed(2);
+                    }
+
+                    // 大号余额卡片（NAS 渲染 PNG 灰度图，Kindle 上清晰可读）
+                    $("#deepseekBalanceBlock").html(
+                        "<div class='ds-card'>"
+                        + "<div class='ds-card-head'>"
+                        + "<span class='ds-badge'>DS</span>"
+                        + "<span class='ds-title'>DeepSeek</span>"
+                        + "<span class='ds-label'>账户余额</span>"
+                        + "</div>"
+                        + "<div class='ds-card-body'>"
+                        + "<span class='ds-currency'>¥</span>"
+                        + "<span class='ds-amount'>" + totalText + "</span>"
+                        + "</div>"
+                        + (detailText ? "<div class='ds-card-foot'>" + detailText + "</div>" : "")
+                        + "</div>"
+                    );
+                } else {
+                    $("#deepseekBalanceBlock").html(
+                        "<div class='ds-card'>"
+                        + "<div class='ds-card-head'>"
+                        + "<span class='ds-badge'>DS</span>"
+                        + "<span class='ds-title'>DeepSeek</span>"
+                        + "</div>"
+                        + "<div class='ds-card-body ds-error-body'>余额不可用</div>"
+                        + "</div>"
+                    );
+                }
+            }).fail(function () {
+                $("#deepseekBalanceBlock").html(
+                    "<div class='ds-card'>"
+                    + "<div class='ds-card-head'>"
+                    + "<span class='ds-badge'>DS</span>"
+                    + "<span class='ds-title'>DeepSeek</span>"
+                    + "</div>"
+                    + "<div class='ds-card-body ds-error-body'>余额待更新</div>"
+                    + "</div>"
+                );
+            });
+        }
+
         function setWeatherArea() {
             log("setWeatherArea");
 
@@ -200,11 +264,10 @@
                 function (data, status) {
                     if (status == "success" && data.code == "200") {
                         var weather = "<i class='qi-" + data.now.icon + "'></i>"
-                            + " 当前 " + data.now.text
-                            + " " + data.now.temp + "℃"
+                            + " " + data.now.text
+                            + " <b>" + data.now.temp + "℃</b>"
                             + " 体感" + data.now.feelsLike + "℃"
-                            + " " + data.now.windDir
-                            + " " + data.now.windScale + "级 <br/>"
+                            + " " + data.now.windDir + data.now.windScale + "级"
                             + " 湿度" + data.now.humidity + "%"
                             + " 降水" + data.now.precip + "mm/h"
                             + " 能见度" + data.now.vis + "km"
@@ -220,6 +283,50 @@
                     // ignore failure
                 });
 
+            // Air Quality
+            $.get(Weather_Air_Url + "key=" + weather_key + "&location=" + weather_location + "&lang=" + weather_lang + "&unit" + weather_unit,
+                function (data, status) {
+                    if (status == "success" && data.code == "200") {
+                        var now = data.now;
+                        // 空气质量纯文字紧凑显示（灰度屏无需彩色徽章图标）
+                        $("#airQualityBlock").html(
+                            "空气质量: <b>" + now.category + "</b> AQI " + now.aqi
+                            + " PM2.5 " + now.pm2p5
+                            + " PM10 " + now.pm10
+                            + " NO₂ " + now.no2
+                            + " SO₂ " + now.so2
+                        );
+                    } else {
+                        $("#airQualityBlock").html("");
+                    }
+                }).fail(function() {
+                    // ignore failure
+                    $("#airQualityBlock").html("");
+                });
+
+            // Weather Indices (1运动 2洗车 3穿衣 5紫外线)
+            $.get(Weather_Indices_Url + "key=" + weather_key + "&location=" + weather_location + "&lang=" + weather_lang + "&type=1,2,3,5",
+                function (data, status) {
+                    if (status == "success" && data.code == "200" && data.daily.length > 0) {
+                        var indexIcons = { "运动": "🏃", "洗车": "🚗", "穿衣": "👔", "紫外线": "☀️" };
+                        for (var i = 0; i < data.daily.length; i++) {
+                            var idx = data.daily[i];
+                            var icon = indexIcons[idx.type] || "✨";
+                            // 紧凑单行：图标 + 名称 + 等级
+                            $("#index" + i).html(
+                                "<span class='index-icon'>" + icon + "</span>"
+                                + "<span class='index-name'>" + idx.name + "</span>"
+                                + " <span class='index-category'>" + idx.category + "</span>"
+                            );
+                        }
+                    } else {
+                        $("#weatherIndicesBlock").html("");
+                    }
+                }).fail(function() {
+                    // ignore failure
+                    $("#weatherIndicesBlock").html("");
+                });
+
             // Daily Weather
             $.get(Weather_Forecast_Day_Url + "key=" + weather_key + "&location=" + weather_location + "&lang=" + weather_lang + "&unit" + weather_unit,
                 function (data, status) {
@@ -228,12 +335,13 @@
                             dailyData = data.daily[i];
                             var fxDateArray = dailyData.fxDate.split('-');
                             var fxDate = new Date(fxDateArray[0], fxDateArray[1]-1, fxDateArray[2]);
-                            $("#date" + i).html((fxDate.getMonth() + 1) + "月" + fxDate.getDate() + "日" + getDayName(fxDate.getDay()));
-                            $("#day" + i).html("<i class='qi-" + dailyData.iconDay + "'></i>"
-                                + dailyData.textDay + dailyData.tempMax + "℃"
-                            );
-                            $("#night" + i).html("<i class='qi-" + dailyData.iconNight + "'></i>"
-                                + dailyData.textNight + dailyData.tempMin + "℃"
+                            // 日期显示（已注释：如需恢复显示几月几日和周几，取消注释即可）
+                            // $("#date" + i).html((fxDate.getMonth() + 1) + "月" + fxDate.getDate() + "日" + getDayName(fxDate.getDay()));
+                            // 每个格子包含白天和夜间天气（一行3列，每天一列）
+                            $("#cell" + i).html("<i class='qi-" + dailyData.iconDay + "'></i>"
+                                + " " + dailyData.textDay + " " + dailyData.tempMax + "℃<br/>"
+                                + "<i class='qi-" + dailyData.iconNight + "'></i>"
+                                + " " + dailyData.textNight + " " + dailyData.tempMin + "℃"
                             );
                         };
                     }
@@ -383,11 +491,15 @@
 
         #dateBlock {
             font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 3px;
         }
 
+        /* 农历日期显示样式（已注释：如需恢复，取消注释即可）
         #chineseDateBlock {
             font-size: 36px;
         }
+        */
 
         #timeBlock {
             padding: 0px;
@@ -395,20 +507,112 @@
             border: 0px;
             font-size: 250px;
             font-family: "chesstype";
-        
+            /* 实时时间留空，但保留位置 */
+            min-height: 290px;
         }
         #poetryBlock {
             text-align: center;
             margin: 0 auto;
             font-size: 36px;
             font-family: "fzxiaktjf";
+            color: #333333;
+            max-width: 92%;
+        }
+
+        /* DeepSeek 余额大卡片（NAS 渲染 PNG 灰度图，Kindle 上清晰可读） */
+        #deepseekBalanceBlock {
+            margin: 8px auto;
+            width: 88%;
+            max-width: 420px;
+        }
+
+        .ds-card {
+            border: 1px solid #888888;
+            border-radius: 10px;
+            background: #ffffff;
+            overflow: hidden;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 卡片头部：黑色品牌条 */
+        .ds-card-head {
+            background: #000000;
+            color: #ffffff;
+            padding: 6px 14px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+
+        .ds-badge {
+            background: #ffffff;
+            color: #000000;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 2px 8px;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+
+        .ds-title {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .ds-label {
+            margin-left: auto;
+            font-size: 22px;
+            color: #cccccc;
+        }
+
+        /* 卡片主体：大号金额 */
+        .ds-card-body {
+            padding: 10px 10px;
+            text-align: center;
+            background: #ffffff;
+        }
+
+        .ds-currency {
+            font-size: 36px;
+            font-weight: bold;
+            color: #000000;
+            vertical-align: baseline;
+        }
+
+        .ds-amount {
+            font-size: 64px;
+            font-weight: bold;
+            color: #000000;
+            letter-spacing: 2px;
+            margin-left: 6px;
+        }
+
+        /* 卡片底部：明细 */
+        .ds-card-foot {
+            padding: 4px 10px 6px;
+            font-size: 20px;
+            color: #777777;
+            border-top: 1px solid #eeeeee;
+            text-align: center;
+        }
+
+        .ds-error-body {
+            font-size: 30px;
+            color: #777777;
+            padding: 16px 10px;
         }
 
 
      
 
         #weatherNowBlock {
-            font-size: 32px;
+            font-size: 24px;
+            color: #000000;
+        }
+
+        #weatherInfoBlock {
+            font-size: 24px;
+            color: #777777;
         }
 
         .weatherCell {
@@ -418,21 +622,104 @@
         .weeklyCell {
             font-size: 32px;
         }
+
+        /* 分割线统一为灰色 */
+        hr {
+            border: none;
+            border-top: 1px solid #888888;
+        }
+
+        /* 天气预报网格（NAS 渲染：一行3列圆角卡片，每天一列，含白天/夜间） */
+        .weatherGrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px;
+            background: #dddddd;
+            border-radius: 10px;
+            padding: 6px;
+            margin: 4px 10px;
+        }
+
+        .weatherGridCell {
+            font-size: 22px;
+            line-height: 1.4;
+            padding: 6px 4px;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #333333;
+        }
+
+        /* 今天（第一列）深色卡片突出，形成明暗对比 */
+        .weatherGridCell:first-child {
+            background: #000000;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        /* 空气质量区块（纯文字紧凑显示） */
+        #airQualityBlock {
+            width: 96%;
+            margin: 6px auto;
+            padding: 5px 4px;
+            font-size: 22px;
+            color: #333333;
+        }
+
+        /* 天气指数网格（紧凑文字，无图标） */
+        #weatherIndicesBlock {
+            width: 96%;
+            margin: 4px auto;
+        }
+
+        .indicesGrid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 6px;
+        }
+
+        .indexCell {
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            background: #ffffff;
+            padding: 4px 2px;
+            font-size: 20px;
+            line-height: 1.3;
+            color: #333333;
+        }
+
+        .index-icon {
+            font-size: 22px;
+        }
+
+        .index-name {
+            font-size: 20px;
+        }
+
+        .index-category {
+            font-size: 20px;
+            font-weight: bold;
+            color: #000000;
+        }
     </style>
 </head>
 
 <body>
     <div id="container">
         <div id='dateBlock'></div>
-        <div id='chineseDateBlock'></div>
+        <!-- 农历日期显示元素（已注释：如需恢复，取消注释即可） -->
+        <!-- <div id='chineseDateBlock'></div> -->
         <div id='timeBlock' onclick="toggleWeatherArea()"></div>
         <hr />
         <div id='poetryBlock' onclick="setPoetryArea()"></div>
+        <hr />
+        <!-- DeepSeek 余额显示（数据由 GitHub Actions 定时更新） -->
+        <div id='deepseekBalanceBlock'></div>
      
     </div>
     <div id="footer" onclick="setWeatherKey()">
         <hr />
         <div id="dailyWeatherBlock">
+            <!-- 原天气表格（已注释：如需恢复显示日期行，取消注释即可）
             <table align="center" cellpadding="10">
                 <tr>
                     <td class="weatherCell" id='date0'></td>
@@ -450,6 +737,25 @@
                     <td class="weatherCell" id='night2'></td>
                 </tr>
             </table>
+            -->
+            <!-- 天气网格（一行3列圆角卡片：每天一列，包含白天和夜间天气） -->
+            <div class="weatherGrid">
+                <div class="weatherGridCell" id='cell0'></div>
+                <div class="weatherGridCell" id='cell1'></div>
+                <div class="weatherGridCell" id='cell2'></div>
+            </div>
+        </div>
+        <hr />
+        <!-- 空气质量 -->
+        <div id='airQualityBlock'></div>
+        <!-- 天气指数 -->
+        <div id='weatherIndicesBlock'>
+            <div class="indicesGrid">
+                <div class="indexCell" id='index0'></div>
+                <div class="indexCell" id='index1'></div>
+                <div class="indexCell" id='index2'></div>
+                <div class="indexCell" id='index3'></div>
+            </div>
         </div>
         <hr />
         <div id='weatherNowBlock'></div>
